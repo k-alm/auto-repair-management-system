@@ -68,7 +68,17 @@ export async function buildApp() {
 
   await fastify.register(errorHandlerPlugin);
   await fastify.register(openApiPlugin);
-  await fastify.register(helmet);
+  await fastify.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+      },
+    },
+  });
   await fastify.register(rateLimit, { global: false });
   await fastify.register(prismaPlugin);
   await fastify.register(authPlugin);

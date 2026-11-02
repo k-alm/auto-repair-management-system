@@ -1,7 +1,7 @@
 model Vehicle {
     id         String    @id @default(uuid())
     customerId String    @map("customer_id")
-    plate      String    @unique // normalizada, sem hífen (ex.: ABC1D23)
+    plate      String    @unique
     brand      String
     model      String
     year       Int

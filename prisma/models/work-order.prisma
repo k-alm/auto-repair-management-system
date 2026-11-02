@@ -3,13 +3,12 @@ model WorkOrder {
     customerId String @map("customer_id")
     vehicleId  String @map("vehicle_id")
 
-    // RECEBIDA | EM_DIAGNOSTICO | AGUARDANDO_APROVACAO | EM_EXECUCAO | FINALIZADA | ENTREGUE | CANCELADA
     status String @default("RECEBIDA")
 
-    startedAt  DateTime? @map("started_at") // entrou em execução
-    finishedAt DateTime? @map("finished_at") // finalizada (base do tempo médio de execução)
-    trackingTokenHash String @unique @map("tracking_token_hash")
-    trackingTokenExpiresAt DateTime @map("tracking_token_expires_at")
+    startedAt              DateTime? @map("started_at")
+    finishedAt             DateTime? @map("finished_at")
+    trackingTokenHash      String    @unique @map("tracking_token_hash")
+    trackingTokenExpiresAt DateTime  @map("tracking_token_expires_at")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -27,7 +26,6 @@ model WorkOrder {
     @@map("work_orders")
 }
 
-// Serviços da OS (preço congelado no momento da inclusão)
 model WorkOrderService {
     workOrderId String  @map("work_order_id")
     serviceId   String  @map("service_id")
@@ -41,7 +39,6 @@ model WorkOrderService {
     @@map("work_order_services")
 }
 
-// Peças/insumos da OS (preço congelado no momento da inclusão)
 model WorkOrderPart {
     workOrderId String  @map("work_order_id")
     partId      String  @map("part_id")
