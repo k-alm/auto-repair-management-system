@@ -1,8 +1,32 @@
-import type { FastifyPluginCallback } from "fastify";
+import type { FastifyPluginCallback, FastifyReply } from "fastify";
+import fp from "fastify-plugin";
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod";
 import { AppError } from "@/shared/domain/errors/app.error";
 
-const errorHandlerPlugin: FastifyPluginCallback = (app, _opts, done) => {
+function handlePrismaConstraintError(error: unknown, reply: FastifyReply) {
+  const code = (error as { code?: string }).code;
+  if (code === "P2002") {
+    return reply.status(409).send({
+      error: "CONFLICT",
+      message: "Já existe um registro com esses dados",
+    });
+  }
+  if (code === "P2003") {
+    return reply.status(409).send({
+      error: "CONFLICT",
+      message: "A operação viola relacionamentos existentes",
+    });
+  }
+  if (code === "P2025") {
+    return reply.status(404).send({
+      error: "NOT_FOUND",
+      message: "Registro não encontrado",
+    });
+  }
+  return null;
+}
+
+const registerErrorHandler: FastifyPluginCallback = (app, _opts, done) => {
   app.setNotFoundHandler((request, reply) => {
     return reply.status(404).send({
       error: "NOT_FOUND",
@@ -30,6 +54,9 @@ const errorHandlerPlugin: FastifyPluginCallback = (app, _opts, done) => {
         message: error.message,
       });
     }
+
+    const prismaError = handlePrismaConstraintError(error, reply);
+    if (prismaError) return prismaError;
 
     const httpError = error as {
       statusCode?: number;
@@ -69,4 +96,4 @@ const errorHandlerPlugin: FastifyPluginCallback = (app, _opts, done) => {
   done();
 };
 
-export { errorHandlerPlugin };
+export const errorHandlerPlugin = fp(registerErrorHandler, { name: "error-handler" });

@@ -15,22 +15,24 @@ services:
       timeout: 5s
       retries: 10
 
-  # migrate:
-  #   build:
-  #     context: .
-  #     target: build
-  #   environment:
-  #     DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-  #   command: ["pnpm", "exec", "prisma", "migrate", "deploy"]
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   restart: "no"
+  migrate:
+    build:
+      context: .
+      target: build
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    command: ["pnpm", "exec", "prisma", "migrate", "deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
-  # mailpit:
-  #   image: axllent/mailpit
-  #   restart: unless-stopped
-  #   ports: ["1025:1025", "8025:8025"]
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
 
   api:
     build:
@@ -41,16 +43,16 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-    # depends_on:
-    #   migrate:
-    #     condition: service_completed_successfully
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      PUBLIC_API_URL: http://localhost:${PORT:-3333}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
     ports:
       - "${PORT:-3333}:${PORT:-3333}"
-
-  # sonarqube:
-  #   image: sonarqube:community
-  #   profiles: ["quality"]
-  #   ports: ["9000:9000"]
 
 volumes:
   pgdata:
