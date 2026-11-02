@@ -17,11 +17,14 @@
     "skipLibCheck": true,
     "moduleResolution": "bundler",
 
-    "paths": { "@/*": ["./src/*"] },
+    "paths": {
+      "@/*": ["./src/*"],
+      "@tests/*": ["./tests/*"]
+    },
 
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "."
   },
-  "include": ["src", "test"],
+  "include": ["src", "tests"],
   "exclude": ["node_modules", "dist"]
 }
