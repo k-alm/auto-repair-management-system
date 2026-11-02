@@ -34,6 +34,6 @@ COPY --from=build --chown=node:node /app/dist ./dist
 
 USER node
 
-EXPOSE 3000
+EXPOSE 3333
 
 CMD ["node", "dist/server.js"]
