@@ -55,5 +55,4 @@ export const AnyErrorSchema = z.union([
 
 export type AppErrorResponse = z.infer<typeof AnyErrorSchema>;
 
-/** 422 pode ser erro de validação do schema OU regra de negócio violada. */
 export const Unprocessable422Schema = z.union([ValidationErrorSchema, UnprocessableSchema]);

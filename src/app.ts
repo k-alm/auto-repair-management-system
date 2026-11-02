@@ -17,14 +17,41 @@ import { GetCustomerUseCase } from "./modules/customers/application/get-customer
 import { ListCustomersUseCase } from "./modules/customers/application/list-customers/list-customers.usecase";
 import { UpdateCustomerUseCase } from "./modules/customers/application/update-customer/update-customer.usecase";
 import { PrismaCustomerRepository } from "./modules/customers/infrastructure/persistence/prisma-customer.repository";
+import { CreatePartUseCase } from "./modules/parts/application/create-part/create-part.usecase";
+import { DeletePartUseCase } from "./modules/parts/application/delete-part/delete-part.usecase";
+import { GetPartUseCase } from "./modules/parts/application/get-part/get-part.usecase";
+import { ListPartsUseCase } from "./modules/parts/application/list-parts/list-parts.usecase";
+import { UpdatePartUseCase } from "./modules/parts/application/update-part/update-part.usecase";
+import { PrismaPartRepository } from "./modules/parts/infrastructure/persistence/prisma-part.repository";
+import { GetPublicTrackingUseCase } from "./modules/public-tracking/application/get-public-tracking/get-public-tracking.usecase";
+import { PrismaTrackingRepository } from "./modules/public-tracking/infrastructure/persistence/prisma-tracking.repository";
+import { Sha256TrackingTokenHasher } from "./modules/public-tracking/infrastructure/security/sha256-tracking-token-hasher";
+import { DecideQuoteUseCase } from "./modules/quotes/application/decide-quote/decide-quote.usecase";
+import { GetQuoteUseCase } from "./modules/quotes/application/get-quote/get-quote.usecase";
+import { SendQuoteUseCase } from "./modules/quotes/application/send-quote/send-quote.usecase";
+import { PrismaQuoteRepository } from "./modules/quotes/infrastructure/persistence/prisma-quote.repository";
+import { OpaqueApprovalCredentialGenerator } from "./modules/quotes/infrastructure/security/opaque-approval-credential-generator";
+import { Sha256QuoteTokenHasher } from "./modules/quotes/infrastructure/security/sha256-quote-token-hasher";
 import { GetAverageExecutionTimeUseCase } from "./modules/reports/application/get-average-execution-time/get-average-execution-time.usecase";
 import { PrismaExecutionTimeRepository } from "./modules/reports/infrastructure/persistence/prisma-execution-time.repository";
+import { CreateServiceUseCase } from "./modules/services/application/create-service/create-service.usecase";
+import { DeleteServiceUseCase } from "./modules/services/application/delete-service/delete-service.usecase";
+import { GetServiceUseCase } from "./modules/services/application/get-service/get-service.usecase";
+import { ListServicesUseCase } from "./modules/services/application/list-services/list-services.usecase";
+import { UpdateServiceUseCase } from "./modules/services/application/update-service/update-service.usecase";
+import { PrismaServiceRepository } from "./modules/services/infrastructure/persistence/prisma-service.repository";
 import { CreateVehicleUseCase } from "./modules/vehicles/application/create-vehicle/create-vehicle.usecase";
 import { DeleteVehicleUseCase } from "./modules/vehicles/application/delete-vehicle/delete-vehicle.usecase";
 import { GetVehicleUseCase } from "./modules/vehicles/application/get-vehicle/get-vehicle.usecase";
 import { ListVehiclesUseCase } from "./modules/vehicles/application/list-vehicles/list-vehicles.usecase";
 import { UpdateVehicleUseCase } from "./modules/vehicles/application/update-vehicle/update-vehicle.usecase";
 import { PrismaVehicleRepository } from "./modules/vehicles/infrastructure/persistence/prisma-vehicle.repository";
+import { CreateWorkOrderUseCase } from "./modules/work-orders/application/create-work-order/create-work-order.usecase";
+import { GetWorkOrderUseCase } from "./modules/work-orders/application/get-work-order/get-work-order.usecase";
+import { ListWorkOrdersUseCase } from "./modules/work-orders/application/list-work-orders/list-work-orders.usecase";
+import { TransitionWorkOrderUseCase } from "./modules/work-orders/application/transition-work-order/transition-work-order.usecase";
+import { PrismaWorkOrderRepository } from "./modules/work-orders/infrastructure/persistence/prisma-work-order.repository";
+import { OpaqueTrackingTokenGenerator } from "./modules/work-orders/infrastructure/security/opaque-tracking-token-generator";
 import authPlugin from "./shared/infrastructure/auth.plugin";
 import corsPlugin from "./shared/infrastructure/cors.plugin";
 import { notificationWorker } from "./shared/infrastructure/notification-worker";
@@ -51,6 +78,11 @@ export async function buildApp() {
   const vehicleRepository = new PrismaVehicleRepository(fastify.prisma);
   const executionTimeRepository = new PrismaExecutionTimeRepository(fastify.prisma);
   const employeeRepository = new PrismaEmployeeCredentialsRepository(fastify.prisma);
+  const serviceRepository = new PrismaServiceRepository(fastify.prisma);
+  const partRepository = new PrismaPartRepository(fastify.prisma);
+  const workOrderRepository = new PrismaWorkOrderRepository(fastify.prisma);
+  const quoteRepository = new PrismaQuoteRepository(fastify.prisma);
+  const trackingRepository = new PrismaTrackingRepository(fastify.prisma);
   await fastify.register(routes, {
     customers: {
       createCustomer: new CreateCustomerUseCase(customerRepository),
@@ -73,6 +105,44 @@ export async function buildApp() {
       new JwtAccessTokenIssuer((payload) => fastify.jwt.sign(payload)),
       env.JWT_EXPIRES_IN,
     ),
+    parts: {
+      create: new CreatePartUseCase(partRepository),
+      delete: new DeletePartUseCase(partRepository),
+      get: new GetPartUseCase(partRepository),
+      list: new ListPartsUseCase(partRepository),
+      update: new UpdatePartUseCase(partRepository),
+    },
+    services: {
+      create: new CreateServiceUseCase(serviceRepository),
+      delete: new DeleteServiceUseCase(serviceRepository),
+      get: new GetServiceUseCase(serviceRepository),
+      list: new ListServicesUseCase(serviceRepository),
+      update: new UpdateServiceUseCase(serviceRepository),
+    },
+    workOrders: {
+      create: new CreateWorkOrderUseCase(
+        workOrderRepository,
+        new OpaqueTrackingTokenGenerator(),
+        env.TRACKING_TOKEN_TTL_DAYS,
+        env.PUBLIC_API_URL,
+      ),
+      get: new GetWorkOrderUseCase(workOrderRepository),
+      list: new ListWorkOrdersUseCase(workOrderRepository),
+      transition: new TransitionWorkOrderUseCase(workOrderRepository),
+    },
+    quotes: {
+      decide: new DecideQuoteUseCase(quoteRepository, new Sha256QuoteTokenHasher()),
+      get: new GetQuoteUseCase(quoteRepository),
+      send: new SendQuoteUseCase(
+        quoteRepository,
+        new OpaqueApprovalCredentialGenerator(),
+        env.APPROVAL_TOKEN_TTL_HOURS,
+        env.PUBLIC_API_URL,
+      ),
+    },
+    publicTracking: {
+      get: new GetPublicTrackingUseCase(trackingRepository, new Sha256TrackingTokenHasher()),
+    },
   });
   notificationWorker(fastify);
 
