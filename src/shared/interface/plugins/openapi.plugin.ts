@@ -14,7 +14,6 @@ const tags = [
   { name: "Quotes", description: "Orçamentos" },
   { name: "Public", description: "Acompanhamento e aprovação públicos" },
   { name: "Reports", description: "Relatórios" },
-  { name: "Health", description: "Disponibilidade da API" },
 ];
 
 const openApiPlugin: FastifyPluginAsync = async (fastify) => {
