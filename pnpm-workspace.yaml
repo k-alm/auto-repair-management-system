@@ -1,0 +1,10 @@
+packages: []
+
+allowBuilds:
+  '@prisma/engines': false
+  bcrypt: false
+  cpu-features: false
+  esbuild: false
+  prisma: false
+  protobufjs: false
+  ssh2: false
