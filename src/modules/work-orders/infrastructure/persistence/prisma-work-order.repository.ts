@@ -98,7 +98,7 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
         const trackingLink = `${input.publicApiUrl}/api/public/work-orders/${order.id}/track#${input.trackingToken}`;
         await queueNotification(tx, {
           recipient: customer.email,
-          subject: `Acompanhamento da ordem de serviço ${order.id}`,
+          subject: `Acompanhamento de ordem de serviço`,
           text: `Olá, ${customer.name}. Acompanhe sua ordem de serviço neste link pessoal: ${trackingLink}`,
           html: `<p>Olá, ${escapeHtml(customer.name)}.</p><p><a href="${trackingLink}">Acompanhar ordem de serviço</a></p><p>Esse link é pessoal. Não o compartilhe.</p>`,
         });
