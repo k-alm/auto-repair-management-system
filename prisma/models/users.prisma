@@ -1,0 +1,30 @@
+model Customer {
+    id        String    @id @default(uuid())
+    name      String
+    document  String    @unique
+    email     String
+    phone     String
+    deletedAt DateTime? @map("deleted_at")
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @updatedAt @map("updated_at")
+
+    vehicles   Vehicle[]
+    workOrders WorkOrder[]
+
+    @@map("customers")
+}
+
+model Employee {
+    id    String @id @default(uuid())
+    name  String
+    email String @unique
+
+    role String // ADMIN / ATENDANT / MECHANIC
+
+    passwordHash String    @map("password_hash")
+    deletedAt    DateTime? @map("deleted_at")
+    createdAt    DateTime  @default(now()) @map("created_at")
+    updatedAt    DateTime  @updatedAt @map("updated_at")
+
+    @@map("employees")
+}
