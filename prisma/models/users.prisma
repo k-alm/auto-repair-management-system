@@ -19,7 +19,7 @@ model Employee {
     name  String
     email String @unique
 
-    role String // ADMIN / ATENDANT / MECHANIC
+    role String
 
     passwordHash String    @map("password_hash")
     deletedAt    DateTime? @map("deleted_at")
