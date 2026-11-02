@@ -5,12 +5,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "pnpm typecheck && tsx watch --env-file=.env src/server.ts",
-    "start": "pnpm typecheck && tsx src/server.ts",
+    "start": "pnpm typecheck && tsx --env-file=.env src/server.ts",
     "build": "pnpm typecheck && tsup src/server.ts --format esm --platform node --target node24 --out-dir dist --clean --sourcemap",
     "typecheck": "tsc --noEmit",
     "check:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:integration": "vitest run tests/integration",
+    "test:coverage": "vitest run --coverage",
     "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate"
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:seed": "prisma db seed"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.0",
@@ -43,18 +48,13 @@
     "fastify": "^5.8.5",
     "fastify-plugin": "^6.0.0",
     "fastify-type-provider-zod": "^6.1.0",
+    "nodemailer": "^8.0.3",
     "pg": "^8.21.0",
     "zod": "^4.4.3"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "10.0.0",
-      "onFail": "download"
-    }
-  },
+  "packageManager": "pnpm@10.0.0",
   "type": "module"
 }
