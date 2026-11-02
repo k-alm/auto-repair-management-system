@@ -6,7 +6,15 @@ import { jsonSchemaTransform } from "fastify-type-provider-zod";
 
 const tags = [
   { name: "Auth", description: "Autenticação" },
-  { name: "Employees", description: "Gestão de funcionários (somente ADMIN)" },
+  { name: "Customers", description: "Gestão de clientes" },
+  { name: "Vehicles", description: "Gestão de veículos" },
+  { name: "Catalog", description: "Serviços e peças" },
+  { name: "Inventory", description: "Estoque e movimentações" },
+  { name: "Work orders", description: "Ordens de serviço" },
+  { name: "Quotes", description: "Orçamentos" },
+  { name: "Public", description: "Acompanhamento e aprovação públicos" },
+  { name: "Reports", description: "Relatórios" },
+  { name: "Health", description: "Disponibilidade da API" },
 ];
 
 const openApiPlugin: FastifyPluginAsync = async (fastify) => {
@@ -18,6 +26,7 @@ const openApiPlugin: FastifyPluginAsync = async (fastify) => {
         version: "0.1.0",
       },
       tags,
+      security: [{ bearerAuth: [] }],
       components: {
         securitySchemes: {
           bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
