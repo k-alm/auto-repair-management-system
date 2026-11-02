@@ -21,7 +21,12 @@ services:
       target: build
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-    command: ["pnpm", "exec", "prisma", "migrate", "deploy"]
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Configure ADMIN_EMAIL no .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Configure ADMIN_PASSWORD no .env}
+    command:
+      - sh
+      - -c
+      - pnpm exec prisma migrate deploy && pnpm exec prisma db seed
     depends_on:
       postgres:
         condition: service_healthy
