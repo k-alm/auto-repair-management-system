@@ -307,7 +307,13 @@ curl -X POST http://localhost:3333/api/auth/login \
 
 ## 13. Análise de vulnerabilidades
 
-- Relatório:  [`docs/security/`](docs/security/)
+- Comando: `pnpm security:audit` (ou `pnpm security:audit:report`, que salva o resultado em `docs/security/`).
+- Varredura usando Trivy (necessário docker, salva o resultado em `docs/security`)
+```
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/docs/security:/out" aquasec/trivy:latest image --severity HIGH,CRITICAL --format table -o /out/trivy-image.txt auto-repair-api
+docker run --rm -v "$PWD/src:/src" -v "$PWD/docs/security:/out" aquasec/trivy:latest fs --scanners vuln,secret,misconfig --format table -o /out/trivy-fs.txt .
+```
+- Relatórios:  [`docs/security/`](docs/security/)
 
 ## 14. Vídeo da entrega
 
