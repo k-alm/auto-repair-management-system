@@ -12,6 +12,8 @@
     "test": "vitest run",
     "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
+    "security:audit": "pnpm audit --prod",
+    "security:audit:report": "pnpm audit --prod && node -e \"require('node:fs').mkdirSync('docs/security',{recursive:true})\" && pnpm audit --prod > docs/security/pnpm-audit.txt && node -e \"require('node:fs').copyFileSync('docs/security/pnpm-audit.txt','docs/security/pnpm-audit-report.txt')\"",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
