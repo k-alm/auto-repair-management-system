@@ -104,7 +104,7 @@ export class PrismaQuoteRepository implements QuoteRepository {
       const decisionUrl = `${input.publicApiUrl}/api/public/quotes/${order.quote.id}#${input.token}`;
       await queueNotification(tx, {
         recipient: order.customer.email,
-        subject: `Orçamento para a ordem de serviço ${order.id}`,
+        subject: `Orçamento para ordem de serviço`,
         text: `Olá, ${order.customer.name}. Total do orçamento: R$ ${order.quote.total}. Para aprovar ou rejeitar, acesse o link individual ${decisionUrl}. Válido até ${input.expiresAt.toISOString()}.`,
         html: `<p>Olá, ${escapeHtml(order.customer.name)}.</p><p>Total do orçamento: <strong>R$ ${order.quote.total}</strong></p><p><a href="${decisionUrl}">Aprovar ou rejeitar orçamento</a></p><p>Link válido até ${input.expiresAt.toISOString()} e utilizável uma única vez.</p>`,
       });
