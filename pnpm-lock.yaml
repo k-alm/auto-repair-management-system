@@ -4058,7 +4058,6 @@ snapshots:
   node-gyp-build@4.8.4: {}
 
   nodemailer@8.0.11: {}
-}
 
   normalize-path@3.0.0: {}
 
