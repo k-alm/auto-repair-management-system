@@ -299,16 +299,15 @@ curl -X POST http://localhost:3333/api/auth/login \
 
 ## 12. Documentação DDD
 
-- Link da documentação no Miro (acesso público): 
+- Link da documentação no Drive (abrir com DRAW.IO): [`Documentação DDD`](https://drive.google.com/file/d/11hX5_6WXkaYHbTiVQrvltSG9iuZ5r_fx/view)
 - Documentação exportada no repositório: [`docs/ddd/`](docs/ddd/)
-  - `event-storming.pdf`
-  - `diagramas.pdf`
+  - [`event-storming`](docs/ddd/event-storming/)
+  - [`diagramas.pdf`](docs/ddd/diagramas.pdf)
   - [`linguagem-ubiqua.md`](docs/ddd/linguagem-ubiqua.md)
 
 ## 13. Análise de vulnerabilidades
 
-- Comando: `pnpm security:audit` (ou `pnpm security:audit:report`, que salva o resultado em `docs/security/`).
-- Relatório: 
+- Relatório:  [`docs/security/`](docs/security/)
 
 ## 14. Vídeo da entrega
 
