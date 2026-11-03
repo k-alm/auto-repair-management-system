@@ -17,11 +17,7 @@ describe("DELETE /api/employees/:id", () => {
       headers: { authorization: "Bearer admin" },
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
-      id: employeeTestIds.mechanic,
-      deleted: true,
-    });
+    expect(response.statusCode).toBe(204);
     expect(repository.employees.has(employeeTestIds.mechanic)).toBe(false);
   });
 });
