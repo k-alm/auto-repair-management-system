@@ -10,7 +10,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("1h"),
   APPROVAL_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(72),
   TRACKING_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(90),
-  SMTP_HOST: z.string().optional(),
+  SMTP_HOST: z.string().optional().default('mailpit'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_SECURE: z.stringbool().default(false),
   SMTP_USER: z.string().optional(),
