@@ -1,5 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { escapeHtml } from "@/shared/domain/html";
+import { env } from "@/config/env";
+import { WorkOrderInsufficientPartStockError } from "@/modules/work-orders/domain/work-order.errors";
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 import { queueNotification } from "@/shared/infrastructure/queue-notification";
 import {
   InvalidQuoteAuthorizationError,
@@ -16,6 +18,13 @@ import type {
   QuoteRepository,
   SendQuoteInput,
 } from "../../domain/quote.repository";
+import {
+  decideQuoteStatus,
+  expireQuoteStatus,
+  QuoteStatus,
+  workOrderStatusForQuoteDecision,
+} from "../../domain/quote-status";
+import { createQuoteEmailContent } from "../notifications/create-quote-email-content";
 
 type Transaction = Prisma.TransactionClient;
 
@@ -51,6 +60,7 @@ export class PrismaQuoteRepository implements QuoteRepository {
     if (!quote) return null;
     return {
       ...quote,
+      status: quote.status as QuoteStatus,
       total: quote.total.toString(),
       workOrder: {
         ...quote.workOrder,
@@ -79,14 +89,18 @@ export class PrismaQuoteRepository implements QuoteRepository {
         },
       });
       if (!order) throw new QuoteNotFoundError();
-      if (order.status !== "EM_DIAGNOSTICO" || !order.quote || order.quote.status !== "PREPARED") {
+      if (
+        order.status !== WorkOrderStatus.EM_DIAGNOSTICO ||
+        !order.quote ||
+        order.quote.status !== QuoteStatus.PREPARED
+      ) {
         throw new QuoteNotReadyToSendError();
       }
 
       const updated = await tx.quote.updateMany({
-        where: { id: order.quote.id, status: "PREPARED" },
+        where: { id: order.quote.id, status: QuoteStatus.PREPARED },
         data: {
-          status: "PENDING",
+          status: QuoteStatus.PENDING,
           tokenHash: input.tokenHash,
           authorizationId: input.authorizationId,
           expiresAt: input.expiresAt,
@@ -96,21 +110,28 @@ export class PrismaQuoteRepository implements QuoteRepository {
         throw new QuoteDecisionConflictError("O orçamento já foi disponibilizado");
 
       const moved = await tx.workOrder.updateMany({
-        where: { id: order.id, status: "EM_DIAGNOSTICO" },
-        data: { status: "AGUARDANDO_APROVACAO" },
+        where: { id: order.id, status: WorkOrderStatus.EM_DIAGNOSTICO },
+        data: { status: WorkOrderStatus.AGUARDANDO_APROVACAO },
       });
       if (moved.count !== 1) throw new QuoteConcurrentUpdateError();
 
       const decisionUrl = `${input.publicApiUrl}/api/public/quotes/${order.quote.id}#${input.token}`;
+      const emailContent = createQuoteEmailContent({
+        customerName: order.customer.name,
+        total: order.quote.total.toString(),
+        decisionUrl,
+        expiresAt: input.expiresAt,
+        timeZone: env.APP_TIME_ZONE,
+      });
       await queueNotification(tx, {
         recipient: order.customer.email,
         subject: `Orçamento para ordem de serviço`,
-        text: `Olá, ${order.customer.name}. Total do orçamento: R$ ${order.quote.total}. Para aprovar ou rejeitar, acesse o link individual ${decisionUrl}. Válido até ${input.expiresAt.toISOString()}.`,
-        html: `<p>Olá, ${escapeHtml(order.customer.name)}.</p><p>Total do orçamento: <strong>R$ ${order.quote.total}</strong></p><p><a href="${decisionUrl}">Aprovar ou rejeitar orçamento</a></p><p>Link válido até ${input.expiresAt.toISOString()} e utilizável uma única vez.</p>`,
+        text: emailContent.text,
+        html: emailContent.html,
       });
       return {
         id: order.quote.id,
-        status: "PENDING",
+        status: QuoteStatus.PENDING,
         total: order.quote.total.toString(),
         expiresAt: input.expiresAt,
       };
@@ -136,22 +157,29 @@ export class PrismaQuoteRepository implements QuoteRepository {
     if (!quote || quote.tokenHash !== input.tokenHash) {
       throw new InvalidQuoteAuthorizationError();
     }
-    if (quote.status !== "PENDING" || !quote.expiresAt || !quote.authorizationId) {
+    if (!quote.expiresAt || !quote.authorizationId) {
       throw new QuoteDecisionConflictError();
     }
+    const nextQuoteStatus = decideQuoteStatus(quote.status as QuoteStatus, input.decision);
     if (quote.expiresAt <= input.now) {
-      await this.expireQuote(tx, quote.id, input.tokenHash, quote.workOrderId);
+      await this.expireQuote(
+        tx,
+        quote.id,
+        input.tokenHash,
+        quote.workOrderId,
+        quote.status as QuoteStatus,
+      );
       return { expired: true as const };
     }
 
     const changed = await tx.quote.updateMany({
       where: {
         id: quote.id,
-        status: "PENDING",
+        status: QuoteStatus.PENDING,
         tokenHash: input.tokenHash,
         expiresAt: { gt: input.now },
       },
-      data: { status: input.decision, respondedAt: input.now },
+      data: { status: nextQuoteStatus, respondedAt: input.now },
     });
     if (changed.count !== 1)
       throw new QuoteDecisionConflictError("O orçamento já recebeu uma decisão");
@@ -160,14 +188,18 @@ export class PrismaQuoteRepository implements QuoteRepository {
       where: { id: quote.workOrderId },
       select: { id: true, status: true },
     });
-    if (order?.status !== "AGUARDANDO_APROVACAO") throw new QuoteOrderConflictError();
-
-    const workOrderStatus = input.decision === "APPROVED" ? "EM_EXECUCAO" : "CANCELADA";
+    if (order?.status !== WorkOrderStatus.AGUARDANDO_APROVACAO) {
+      throw new QuoteOrderConflictError();
+    }
+    if (input.decision === QuoteStatus.APPROVED) {
+      await this.consumeOrderParts(tx, order.id);
+    }
+    const workOrderStatus = workOrderStatusForQuoteDecision(input.decision);
     const updated = await tx.workOrder.updateMany({
-      where: { id: order.id, status: "AGUARDANDO_APROVACAO" },
+      where: { id: order.id, status: WorkOrderStatus.AGUARDANDO_APROVACAO },
       data: {
         status: workOrderStatus,
-        ...(workOrderStatus === "EM_EXECUCAO" && { startedAt: input.now }),
+        ...(workOrderStatus === WorkOrderStatus.EM_EXECUCAO && { startedAt: input.now }),
       },
     });
     if (updated.count !== 1) throw new QuoteConcurrentUpdateError();
@@ -180,21 +212,42 @@ export class PrismaQuoteRepository implements QuoteRepository {
     };
   }
 
+  private async consumeOrderParts(tx: Transaction, workOrderId: string) {
+    const parts = await tx.workOrderPart.findMany({
+      where: { workOrderId },
+      select: { partId: true, quantity: true },
+      orderBy: { partId: "asc" },
+    });
+
+    for (const part of parts) {
+      const updated = await tx.part.updateMany({
+        where: {
+          id: part.partId,
+          stockQuantity: { gte: part.quantity },
+        },
+        data: { stockQuantity: { decrement: part.quantity } },
+      });
+
+      if (updated.count !== 1) throw new WorkOrderInsufficientPartStockError();
+    }
+  }
+
   private async expireQuote(
     tx: Transaction,
     quoteId: string,
     tokenHash: string,
     workOrderId: string,
+    currentStatus: QuoteStatus,
   ) {
     const expired = await tx.quote.updateMany({
-      where: { id: quoteId, status: "PENDING", tokenHash },
-      data: { status: "EXPIRED" },
+      where: { id: quoteId, status: QuoteStatus.PENDING, tokenHash },
+      data: { status: expireQuoteStatus(currentStatus) },
     });
     if (expired.count !== 1) return;
 
     await tx.workOrder.updateMany({
-      where: { id: workOrderId, status: "AGUARDANDO_APROVACAO" },
-      data: { status: "CANCELADA" },
+      where: { id: workOrderId, status: WorkOrderStatus.AGUARDANDO_APROVACAO },
+      data: { status: WorkOrderStatus.CANCELADA },
     });
   }
 }

@@ -1,6 +1,9 @@
+import type { QuoteStatus } from "@/modules/quotes/domain/quote-status";
+import type { WorkOrderStatus } from "../../domain/work-order-status";
+
 export interface GetWorkOrderResponse {
   id: string;
-  status: string;
+  status: WorkOrderStatus;
   createdAt: Date;
   startedAt: Date | null;
   finishedAt: Date | null;
@@ -26,7 +29,7 @@ export interface GetWorkOrderResponse {
   }[];
   quote: {
     id: string;
-    status: string;
+    status: QuoteStatus;
     total: string;
     expiresAt: Date | null;
     respondedAt: Date | null;

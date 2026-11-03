@@ -1,3 +1,4 @@
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 import { averageExecutionMinutes } from "../../domain/average-execution-minutes";
 import type { ExecutionTimeRepository } from "../../domain/execution-time.repository";
 import type { GetAverageExecutionTimeInput } from "./get-average-execution-time.input";
@@ -17,7 +18,10 @@ export class GetAverageExecutionTimeUseCase {
       metric: "average_work_order_execution_minutes",
       averageMinutes: averageExecutionMinutes(durations),
       completedOrders: durations.length,
-      period: { startsAt: "EM_EXECUCAO", endsAt: "FINALIZADA" },
+      period: {
+        startsAt: WorkOrderStatus.EM_EXECUCAO,
+        endsAt: WorkOrderStatus.FINALIZADA,
+      },
     };
   }
 }

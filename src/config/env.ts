@@ -17,6 +17,7 @@ const envSchema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   SMTP_FROM: z.email().default("oficina@example.com"),
   PUBLIC_API_URL: z.url().default("http://localhost:3333"),
+  APP_TIME_ZONE: z.string().default("America/Sao_Paulo"),
   ADMIN_EMAIL: z.string().optional(),
   ADMIN_PASSWORD: z.string().optional(),
 });

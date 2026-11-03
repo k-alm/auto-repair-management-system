@@ -1,4 +1,5 @@
 import type { QuoteRepository } from "../../domain/quote.repository";
+import { QuoteStatus } from "../../domain/quote-status";
 import type { SendQuoteInput } from "./send-quote.input";
 import type { SendQuoteResponse } from "./send-quote.response";
 
@@ -23,6 +24,6 @@ export class SendQuoteUseCase {
       expiresAt,
       publicApiUrl: this.publicApiUrl.replace(/\/$/, ""),
     });
-    return { ...sent, status: "PENDING" };
+    return { ...sent, status: QuoteStatus.PENDING };
   }
 }

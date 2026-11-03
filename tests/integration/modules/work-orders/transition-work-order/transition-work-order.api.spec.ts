@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 import { createWorkOrderApiTestApp } from "../support/create-work-order-api-test-app";
 
 describe("POST /api/work-orders/:id/transitions", () => {
@@ -10,7 +11,7 @@ describe("POST /api/work-orders/:id/transitions", () => {
     close = () => app.close();
     repository.details = {
       id: repository.orderId,
-      status: "RECEBIDA",
+      status: WorkOrderStatus.RECEBIDA,
       createdAt: new Date(),
       startedAt: null,
       finishedAt: null,
@@ -35,9 +36,9 @@ describe("POST /api/work-orders/:id/transitions", () => {
     const response = await app.inject({
       method: "POST",
       url: `/api/work-orders/${repository.orderId}/transitions`,
-      payload: { to: "EM_DIAGNOSTICO" },
+      payload: { to: WorkOrderStatus.EM_DIAGNOSTICO },
     });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ status: "EM_DIAGNOSTICO" });
+    expect(response.json()).toMatchObject({ status: WorkOrderStatus.EM_DIAGNOSTICO });
   });
 });

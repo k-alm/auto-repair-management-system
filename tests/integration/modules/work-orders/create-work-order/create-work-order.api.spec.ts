@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { QuoteStatus } from "@/modules/quotes/domain/quote-status";
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 import { createWorkOrderApiTestApp } from "../support/create-work-order-api-test-app";
 
 describe("POST /api/work-orders", () => {
@@ -21,8 +23,8 @@ describe("POST /api/work-orders", () => {
     expect(response.statusCode).toBe(201);
     expect(response.json()).toMatchObject({
       id: repository.orderId,
-      status: "RECEBIDA",
-      quote: { status: "PREPARED", total: "25.00" },
+      status: WorkOrderStatus.RECEBIDA,
+      quote: { status: QuoteStatus.PREPARED, total: "25.00" },
     });
     expect(repository.createdInput?.customerDocument).toBe("52998224725");
   });

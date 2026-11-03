@@ -1,6 +1,7 @@
-import type { workOrderStatuses } from "./work-order-rules";
+import type { QuoteStatus } from "@/modules/quotes/domain/quote-status";
+import type { WorkOrderStatus } from "./work-order-status";
 
-export type WorkOrderStatus = (typeof workOrderStatuses)[number];
+export { WorkOrderStatus } from "./work-order-status";
 
 export interface CreateWorkOrderData {
   customerDocument: string;
@@ -15,23 +16,23 @@ export interface CreateWorkOrderData {
 
 export interface WorkOrderCreated {
   id: string;
-  status: string;
+  status: WorkOrderStatus;
   createdAt: Date;
-  quote: { id: string; status: string; total: string };
+  quote: { id: string; status: QuoteStatus; total: string };
 }
 
 export interface WorkOrderListItem {
   id: string;
-  status: string;
+  status: WorkOrderStatus;
   createdAt: Date;
   customer: { id: string; name: string };
   vehicle: { id: string; plate: string; brand: string; model: string };
-  quote: { id: string; status: string; total: string } | null;
+  quote: { id: string; status: QuoteStatus; total: string } | null;
 }
 
 export interface WorkOrderDetails {
   id: string;
-  status: string;
+  status: WorkOrderStatus;
   createdAt: Date;
   startedAt: Date | null;
   finishedAt: Date | null;
@@ -45,7 +46,7 @@ export interface WorkOrderDetails {
   }[];
   quote: {
     id: string;
-    status: string;
+    status: QuoteStatus;
     total: string;
     expiresAt: Date | null;
     respondedAt: Date | null;
@@ -63,7 +64,7 @@ export interface WorkOrderRepository {
   findById(id: string): Promise<WorkOrderDetails | null>;
   transition(input: { id: string; to: WorkOrderStatus; now: Date }): Promise<{
     id: string;
-    from: string;
-    status: string;
+    from: WorkOrderStatus;
+    status: WorkOrderStatus;
   }>;
 }

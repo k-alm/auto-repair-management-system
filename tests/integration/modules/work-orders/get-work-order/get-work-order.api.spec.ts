@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 import { createWorkOrderApiTestApp } from "../support/create-work-order-api-test-app";
 
 describe("GET /api/work-orders/:id", () => {
@@ -10,7 +11,7 @@ describe("GET /api/work-orders/:id", () => {
     close = () => app.close();
     repository.details = {
       id: repository.orderId,
-      status: "RECEBIDA",
+      status: WorkOrderStatus.RECEBIDA,
       createdAt: new Date("2026-01-01T10:00:00Z"),
       startedAt: null,
       finishedAt: null,

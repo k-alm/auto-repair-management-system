@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { QuoteStatus } from "@/modules/quotes/domain/quote-status";
 import { createQuoteApiTestApp } from "../support/create-quote-api-test-app";
 
 describe("GET /api/quotes/:id", () => {
@@ -11,7 +12,7 @@ describe("GET /api/quotes/:id", () => {
     repository.details = {
       id: "00000000-0000-4000-8000-000000000020",
       workOrderId: "00000000-0000-4000-8000-000000000021",
-      status: "PREPARED",
+      status: QuoteStatus.PREPARED,
       total: "25.00",
       createdAt: new Date(),
       expiresAt: null,
@@ -27,6 +28,6 @@ describe("GET /api/quotes/:id", () => {
       url: `/api/quotes/${repository.details.id}`,
     });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ status: "PREPARED", total: "25.00" });
+    expect(response.json()).toMatchObject({ status: QuoteStatus.PREPARED, total: "25.00" });
   });
 });

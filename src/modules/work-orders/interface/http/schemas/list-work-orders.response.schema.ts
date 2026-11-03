@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { QuoteStatus } from "@/modules/quotes/domain/quote-status";
+import { WorkOrderStatus } from "../../../domain/work-order-status";
 
 export const listWorkOrdersResponseSchema = z.object({
   items: z.array(
     z.object({
       id: z.uuid(),
-      status: z.string(),
+      status: z.enum(WorkOrderStatus),
       createdAt: z.date(),
       customer: z.object({ id: z.uuid(), name: z.string() }),
       vehicle: z.object({
@@ -13,7 +15,7 @@ export const listWorkOrdersResponseSchema = z.object({
         brand: z.string(),
         model: z.string(),
       }),
-      quote: z.object({ id: z.uuid(), status: z.string(), total: z.string() }).nullable(),
+      quote: z.object({ id: z.uuid(), status: z.enum(QuoteStatus), total: z.string() }).nullable(),
     }),
   ),
   page: z.number().int(),

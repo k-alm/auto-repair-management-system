@@ -1,27 +1,25 @@
 import { ConflictError } from "@/shared/domain/errors";
+import { WorkOrderStatus } from "./work-order-status";
 
-export const workOrderStatuses = [
-  "RECEBIDA",
-  "EM_DIAGNOSTICO",
-  "AGUARDANDO_APROVACAO",
-  "EM_EXECUCAO",
-  "FINALIZADA",
-  "ENTREGUE",
-  "CANCELADA",
-] as const;
+export const workOrderStatuses = Object.values(WorkOrderStatus);
 
-const transitions: Record<string, readonly string[]> = {
-  RECEBIDA: ["EM_DIAGNOSTICO", "CANCELADA"],
-  EM_DIAGNOSTICO: ["AGUARDANDO_APROVACAO", "CANCELADA"],
-  AGUARDANDO_APROVACAO: ["EM_EXECUCAO", "CANCELADA"],
-  EM_EXECUCAO: ["FINALIZADA", "CANCELADA"],
-  FINALIZADA: ["ENTREGUE"],
-  ENTREGUE: [],
-  CANCELADA: [],
+const transitions: Record<WorkOrderStatus, readonly WorkOrderStatus[]> = {
+  [WorkOrderStatus.RECEBIDA]: [WorkOrderStatus.EM_DIAGNOSTICO, WorkOrderStatus.CANCELADA],
+  [WorkOrderStatus.EM_DIAGNOSTICO]: [
+    WorkOrderStatus.AGUARDANDO_APROVACAO,
+    WorkOrderStatus.CANCELADA,
+  ],
+  [WorkOrderStatus.AGUARDANDO_APROVACAO]: [WorkOrderStatus.EM_EXECUCAO, WorkOrderStatus.CANCELADA],
+  [WorkOrderStatus.EM_EXECUCAO]: [WorkOrderStatus.FINALIZADA, WorkOrderStatus.CANCELADA],
+  [WorkOrderStatus.FINALIZADA]: [WorkOrderStatus.ENTREGUE],
+  [WorkOrderStatus.ENTREGUE]: [],
+  [WorkOrderStatus.CANCELADA]: [],
 };
 
 export function assertWorkOrderTransition(current: string, next: string) {
-  if (!transitions[current]?.includes(next)) {
+  const allowedStatuses = Object.entries(transitions).find(([status]) => status === current)?.[1];
+
+  if (!allowedStatuses?.some((status) => status === next)) {
     throw new ConflictError(`Transição de status inválida: ${current} -> ${next}`);
   }
 }

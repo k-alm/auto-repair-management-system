@@ -1,10 +1,12 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
+import { QuoteStatus } from "@/modules/quotes/domain/quote-status";
 import { escapeHtml } from "@/shared/domain/html";
 import { queueNotification } from "@/shared/infrastructure/queue-notification";
 import {
   WorkOrderCatalogItemUnavailableError,
   WorkOrderConcurrentUpdateError,
   WorkOrderCustomerNotFoundError,
+  WorkOrderInsufficientPartStockError,
   WorkOrderNotFoundError,
   WorkOrderVehicleOwnershipError,
 } from "../../domain/work-order.errors";
@@ -15,6 +17,7 @@ import type {
   WorkOrderRepository,
 } from "../../domain/work-order.repository";
 import { calculateQuoteTotal } from "../../domain/work-order-rules";
+import { WorkOrderStatus } from "../../domain/work-order-status";
 
 export class PrismaWorkOrderRepository implements WorkOrderRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -45,7 +48,7 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
               isActive: true,
               deletedAt: null,
             },
-            select: { id: true, price: true },
+            select: { id: true, price: true, stockQuantity: true },
           }),
         ]);
         if (services.length !== input.serviceIds.length) {
@@ -53,6 +56,10 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
         }
         if (parts.length !== input.parts.length) {
           throw new WorkOrderCatalogItemUnavailableError("Peça");
+        }
+        const quantities = new Map(input.parts.map((part) => [part.partId, part.quantity]));
+        if (parts.some((part) => part.stockQuantity < (quantities.get(part.id) ?? 0))) {
+          throw new WorkOrderInsufficientPartStockError();
         }
 
         const order = await tx.workOrder.create({
@@ -72,7 +79,6 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
             unitPrice: service.price,
           })),
         });
-        const quantities = new Map(input.parts.map((part) => [part.partId, part.quantity]));
         await tx.workOrderPart.createMany({
           data: parts.map((part) => ({
             workOrderId: order.id,
@@ -92,7 +98,7 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
           ),
         );
         const quote = await tx.quote.create({
-          data: { workOrderId: order.id, total, status: "PREPARED" },
+          data: { workOrderId: order.id, total, status: QuoteStatus.PREPARED },
           select: { id: true, status: true, total: true },
         });
         const trackingLink = `${input.publicApiUrl}/api/public/work-orders/${order.id}/track#${input.trackingToken}`;
@@ -105,14 +111,23 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
 
         return {
           ...order,
-          quote: { ...quote, total: quote.total.toString() },
+          quote: {
+            ...quote,
+            status: quote.status as QuoteStatus,
+            total: quote.total.toString(),
+          },
+          status: order.status as WorkOrderStatus,
         };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
   }
 
-  async list(input: { skip: number; take: number; status?: string }): Promise<WorkOrderPage> {
+  async list(input: {
+    skip: number;
+    take: number;
+    status?: WorkOrderStatus;
+  }): Promise<WorkOrderPage> {
     const where = { ...(input.status && { status: input.status }) };
     const [records, total] = await this.prisma.$transaction([
       this.prisma.workOrder.findMany({
@@ -134,7 +149,14 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
     return {
       items: records.map((record) => ({
         ...record,
-        quote: record.quote ? { ...record.quote, total: record.quote.total.toString() } : null,
+        status: record.status as WorkOrderStatus,
+        quote: record.quote
+          ? {
+              ...record.quote,
+              status: record.quote.status as QuoteStatus,
+              total: record.quote.total.toString(),
+            }
+          : null,
       })),
       total,
     };
@@ -167,6 +189,7 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
     if (!order) return null;
     return {
       ...order,
+      status: order.status as WorkOrderStatus,
       services: order.services.map(({ service, unitPrice }) => ({
         service,
         unitPrice: unitPrice.toString(),
@@ -176,11 +199,17 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
         quantity,
         unitPrice: unitPrice.toString(),
       })),
-      quote: order.quote ? { ...order.quote, total: order.quote.total.toString() } : null,
+      quote: order.quote
+        ? {
+            ...order.quote,
+            status: order.quote.status as QuoteStatus,
+            total: order.quote.total.toString(),
+          }
+        : null,
     };
   }
 
-  async transition(input: { id: string; to: string; now: Date }) {
+  async transition(input: { id: string; to: WorkOrderStatus; now: Date }) {
     const order = await this.prisma.workOrder.findUnique({
       where: { id: input.id },
       select: { id: true, status: true },
@@ -190,10 +219,14 @@ export class PrismaWorkOrderRepository implements WorkOrderRepository {
       where: { id: input.id, status: order.status },
       data: {
         status: input.to,
-        ...(input.to === "FINALIZADA" && { finishedAt: input.now }),
+        ...(input.to === WorkOrderStatus.FINALIZADA && { finishedAt: input.now }),
       },
     });
     if (result.count !== 1) throw new WorkOrderConcurrentUpdateError();
-    return { id: order.id, from: order.status, status: input.to };
+    return {
+      id: order.id,
+      from: order.status as WorkOrderStatus,
+      status: input.to,
+    };
   }
 }

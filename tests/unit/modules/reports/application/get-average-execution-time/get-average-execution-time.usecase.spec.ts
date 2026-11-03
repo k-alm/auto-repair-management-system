@@ -4,6 +4,7 @@ import type {
   ExecutionPeriod,
   ExecutionTimeRepository,
 } from "@/modules/reports/domain/execution-time.repository";
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 
 class FakeExecutionTimeRepository implements ExecutionTimeRepository {
   constructor(private readonly periods: ExecutionPeriod[]) {}
@@ -26,7 +27,10 @@ describe("GetAverageExecutionTimeUseCase", () => {
       metric: "average_work_order_execution_minutes",
       averageMinutes: 45,
       completedOrders: 2,
-      period: { startsAt: "EM_EXECUCAO", endsAt: "FINALIZADA" },
+      period: {
+        startsAt: WorkOrderStatus.EM_EXECUCAO,
+        endsAt: WorkOrderStatus.FINALIZADA,
+      },
     });
   });
 
