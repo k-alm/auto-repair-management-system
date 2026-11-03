@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Crie o .env a partir do .env.example}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Crie o .env a partir do .env.example}
+      POSTGRES_DB: ${POSTGRES_DB:?Crie o .env a partir do .env.example}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      target: build
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Configure ADMIN_EMAIL no .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Configure ADMIN_PASSWORD no .env}
+    command:
+      - sh
+      - -c
+      - pnpm exec prisma migrate deploy && pnpm exec prisma db seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+  api:
+    build:
+      context: .
+      target: production
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      PUBLIC_API_URL: http://localhost:${PORT:-3333}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    ports:
+      - "${PORT:-3333}:${PORT:-3333}"
+
+volumes:
+  pgdata:

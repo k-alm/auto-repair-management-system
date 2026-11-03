@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Error",
+      "ESNext.Iterator",
+      "ESNext.Promise"
+    ],
+    "module": "ESNext",
+    "target": "ES2024",
+    "types": ["node"],
+
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+
+    "paths": {
+      "@/*": ["./src/*"],
+      "@tests/*": ["./tests/*"]
+    },
+
+    "outDir": "./dist",
+    "rootDir": "."
+  },
+  "include": ["src", "tests"],
+  "exclude": ["node_modules", "dist"]
+}

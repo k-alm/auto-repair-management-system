@@ -1,0 +1,15 @@
+model Service {
+    id          String    @id @default(uuid())
+    name        String
+    description String?
+    price       Decimal   @db.Decimal(10, 2)
+    estimatedMinutes Int @default(1) @map("estimated_minutes")
+    isActive    Boolean   @default(true) @map("is_active")
+    deletedAt   DateTime? @map("deleted_at")
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @updatedAt @map("updated_at")
+
+    workOrderServices WorkOrderService[]
+
+    @@map("services")
+}

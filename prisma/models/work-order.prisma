@@ -1,0 +1,54 @@
+model WorkOrder {
+    id         String @id @default(uuid())
+    customerId String @map("customer_id")
+    vehicleId  String @map("vehicle_id")
+
+    status String @default("RECEBIDA")
+
+    startedAt              DateTime? @map("started_at")
+    finishedAt             DateTime? @map("finished_at")
+    trackingTokenHash      String    @unique @map("tracking_token_hash")
+    trackingTokenExpiresAt DateTime  @map("tracking_token_expires_at")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    customer Customer @relation(fields: [customerId], references: [id])
+    vehicle  Vehicle  @relation(fields: [vehicleId], references: [id])
+
+    services WorkOrderService[]
+    parts    WorkOrderPart[]
+    quote    Quote?
+
+    @@index([customerId])
+    @@index([vehicleId])
+    @@index([status])
+    @@map("work_orders")
+}
+
+model WorkOrderService {
+    workOrderId String  @map("work_order_id")
+    serviceId   String  @map("service_id")
+    unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
+
+    workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+    service   Service   @relation(fields: [serviceId], references: [id])
+
+    @@id([workOrderId, serviceId])
+    @@index([serviceId])
+    @@map("work_order_services")
+}
+
+model WorkOrderPart {
+    workOrderId String  @map("work_order_id")
+    partId      String  @map("part_id")
+    quantity    Int
+    unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
+
+    workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+    part      Part      @relation(fields: [partId], references: [id])
+
+    @@id([workOrderId, partId])
+    @@index([partId])
+    @@map("work_order_parts")
+}
