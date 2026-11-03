@@ -2,6 +2,7 @@ import { FakeWorkOrderRepository } from "@tests/support/fake-work-order.reposito
 import { describe, expect, it } from "vitest";
 import { TransitionWorkOrderUseCase } from "@/modules/work-orders/application/transition-work-order/transition-work-order.usecase";
 import { WorkOrderNotFoundError } from "@/modules/work-orders/domain/work-order.errors";
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 import { ConflictError } from "@/shared/domain/errors";
 
 describe("TransitionWorkOrderUseCase", () => {
@@ -9,7 +10,7 @@ describe("TransitionWorkOrderUseCase", () => {
     await expect(
       new TransitionWorkOrderUseCase(new FakeWorkOrderRepository()).execute({
         id: "missing",
-        to: "EM_DIAGNOSTICO",
+        to: WorkOrderStatus.EM_DIAGNOSTICO,
       }),
     ).rejects.toBeInstanceOf(WorkOrderNotFoundError);
   });
@@ -18,7 +19,7 @@ describe("TransitionWorkOrderUseCase", () => {
     const repository = new FakeWorkOrderRepository();
     repository.details = {
       id: "order-id",
-      status: "RECEBIDA",
+      status: WorkOrderStatus.RECEBIDA,
       createdAt: new Date(),
       startedAt: null,
       finishedAt: null,
@@ -35,15 +36,49 @@ describe("TransitionWorkOrderUseCase", () => {
       quote: null,
     };
     await expect(
-      new TransitionWorkOrderUseCase(repository).execute({ id: "order-id", to: "FINALIZADA" }),
+      new TransitionWorkOrderUseCase(repository).execute({
+        id: "order-id",
+        to: WorkOrderStatus.FINALIZADA,
+      }),
     ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it("requires quote approval to start work order execution", async () => {
+    const repository = new FakeWorkOrderRepository();
+    repository.details = {
+      id: "order-id",
+      status: WorkOrderStatus.AGUARDANDO_APROVACAO,
+      createdAt: new Date(),
+      startedAt: null,
+      finishedAt: null,
+      customer: {
+        id: "customer-id",
+        name: "Ana",
+        document: "52998224725",
+        email: "a@b.co",
+        phone: "11999999999",
+      },
+      vehicle: { id: "vehicle-id", plate: "ABC1234", brand: "Marca", model: "Modelo", year: 2020 },
+      services: [],
+      parts: [],
+      quote: null,
+    };
+
+    await expect(
+      new TransitionWorkOrderUseCase(repository).execute({
+        id: "order-id",
+        to: WorkOrderStatus.EM_EXECUCAO,
+      }),
+    ).rejects.toMatchObject({
+      message: "A execução deve ser iniciada pela aprovação do orçamento",
+    });
   });
 
   it("transitions an order according to the state machine", async () => {
     const repository = new FakeWorkOrderRepository();
     repository.details = {
       id: "order-id",
-      status: "RECEBIDA",
+      status: WorkOrderStatus.RECEBIDA,
       createdAt: new Date(),
       startedAt: null,
       finishedAt: null,
@@ -60,7 +95,10 @@ describe("TransitionWorkOrderUseCase", () => {
       quote: null,
     };
     await expect(
-      new TransitionWorkOrderUseCase(repository).execute({ id: "order-id", to: "EM_DIAGNOSTICO" }),
-    ).resolves.toMatchObject({ id: "order-id", status: "EM_DIAGNOSTICO" });
+      new TransitionWorkOrderUseCase(repository).execute({
+        id: "order-id",
+        to: WorkOrderStatus.EM_DIAGNOSTICO,
+      }),
+    ).resolves.toMatchObject({ id: "order-id", status: WorkOrderStatus.EM_DIAGNOSTICO });
   });
 });

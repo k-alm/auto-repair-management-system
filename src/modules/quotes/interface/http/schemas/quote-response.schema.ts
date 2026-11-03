@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { QuoteStatus } from "../../../domain/quote-status";
 
 export const quoteResponseSchema = z.object({
   id: z.uuid(),
   workOrderId: z.uuid(),
-  status: z.string(),
+  status: z.enum(QuoteStatus),
   total: z.string(),
   createdAt: z.date(),
   expiresAt: z.date().nullable(),

@@ -1,7 +1,9 @@
+import type { QuoteStatus } from "../../domain/quote-status";
+
 export interface GetQuoteResponse {
   id: string;
   workOrderId: string;
-  status: string;
+  status: QuoteStatus;
   total: string;
   createdAt: Date;
   expiresAt: Date | null;

@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { QuoteStatus } from "@/modules/quotes/domain/quote-status";
+import { WorkOrderStatus } from "../../../domain/work-order-status";
 
 export const getWorkOrderResponseSchema = z.object({
   id: z.uuid(),
-  status: z.string(),
+  status: z.enum(WorkOrderStatus),
   createdAt: z.date(),
   startedAt: z.date().nullable(),
   finishedAt: z.date().nullable(),
@@ -36,7 +38,7 @@ export const getWorkOrderResponseSchema = z.object({
   quote: z
     .object({
       id: z.uuid(),
-      status: z.string(),
+      status: z.enum(QuoteStatus),
       total: z.string(),
       expiresAt: z.date().nullable(),
       respondedAt: z.date().nullable(),

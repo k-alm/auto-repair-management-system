@@ -36,6 +36,12 @@ export class WorkOrderInvalidPartQuantityError extends AppError {
   }
 }
 
+export class WorkOrderInsufficientPartStockError extends AppError {
+  constructor() {
+    super("Estoque insuficiente para as peças da ordem de serviço", 409, "INSUFFICIENT_PART_STOCK");
+  }
+}
+
 export class WorkOrderConcurrentUpdateError extends AppError {
   constructor() {
     super("A ordem foi alterada por outra operação", 409, "WORK_ORDER_CONCURRENT_UPDATE");

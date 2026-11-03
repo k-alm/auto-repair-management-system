@@ -1,7 +1,10 @@
+import type { WorkOrderStatus } from "../../work-orders/domain/work-order-status";
+import type { QuoteDecision, QuoteStatus } from "./quote-status";
+
 export interface QuoteDetails {
   id: string;
   workOrderId: string;
-  status: string;
+  status: QuoteStatus;
   total: string;
   createdAt: Date;
   expiresAt: Date | null;
@@ -22,9 +25,9 @@ export type QuoteDecisionResult =
   | {
       expired: false;
       authorizationId: string;
-      decision: "APPROVED" | "REJECTED";
+      decision: QuoteDecision;
       decidedAt: Date;
-      workOrderStatus: string;
+      workOrderStatus: WorkOrderStatus.EM_EXECUCAO | WorkOrderStatus.CANCELADA;
     };
 
 export interface SendQuoteInput {
@@ -39,7 +42,7 @@ export interface SendQuoteInput {
 export interface DecideQuoteInput {
   id: string;
   tokenHash: string;
-  decision: "APPROVED" | "REJECTED";
+  decision: QuoteDecision;
   now: Date;
 }
 
@@ -47,7 +50,7 @@ export interface QuoteRepository {
   findDetails(id: string): Promise<QuoteDetails | null>;
   send(input: SendQuoteInput): Promise<{
     id: string;
-    status: string;
+    status: QuoteStatus;
     total: string;
     expiresAt: Date;
   }>;

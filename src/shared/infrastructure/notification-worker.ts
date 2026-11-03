@@ -5,6 +5,13 @@ import { decryptPayload } from "./secure-tokens";
 
 type EmailPayload = { text: string; html: string };
 
+enum NotificationStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  SENT = "SENT",
+  FAILED = "FAILED",
+}
+
 async function deliverNext(
   fastify: FastifyInstance,
   transporter: ReturnType<typeof nodemailer.createTransport>,
@@ -12,7 +19,7 @@ async function deliverNext(
   const now = new Date();
   const notification = await fastify.prisma.notification.findFirst({
     where: {
-      status: "PENDING",
+      status: NotificationStatus.PENDING,
       OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }],
     },
     orderBy: { createdAt: "asc" },
@@ -22,10 +29,10 @@ async function deliverNext(
   const claimed = await fastify.prisma.notification.updateMany({
     where: {
       id: notification.id,
-      status: "PENDING",
+      status: NotificationStatus.PENDING,
       OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }],
     },
-    data: { status: "PROCESSING", attempts: { increment: 1 } },
+    data: { status: NotificationStatus.PROCESSING, attempts: { increment: 1 } },
   });
   if (claimed.count !== 1) return true;
 
@@ -40,7 +47,7 @@ async function deliverNext(
     });
     await fastify.prisma.notification.update({
       where: { id: notification.id },
-      data: { status: "SENT", sentAt: new Date(), lastError: null },
+      data: { status: NotificationStatus.SENT, sentAt: new Date(), lastError: null },
     });
     return true;
   } catch {
@@ -48,7 +55,7 @@ async function deliverNext(
     await fastify.prisma.notification.update({
       where: { id: notification.id },
       data: {
-        status: attempts >= 10 ? "FAILED" : "PENDING",
+        status: attempts >= 10 ? NotificationStatus.FAILED : NotificationStatus.PENDING,
         lastError: "Falha na entrega da notificação",
         nextAttemptAt:
           attempts >= 10 ? null : new Date(Date.now() + Math.min(60, 2 ** attempts) * 1000),

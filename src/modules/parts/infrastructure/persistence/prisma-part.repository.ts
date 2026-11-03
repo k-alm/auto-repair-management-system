@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { Part, PartProps } from "../../domain/entities/part";
-import { Part as PartEntity } from "../../domain/entities/part";
+import { MAX_PART_STOCK_QUANTITY, Part as PartEntity } from "../../domain/entities/part";
+import { PartNotFoundError, PartStockOverflowError } from "../../domain/part.errors";
 import type { PartPage, PartRepository } from "../../domain/part.repository";
 
 export class PrismaPartRepository implements PartRepository {
@@ -44,6 +45,38 @@ export class PrismaPartRepository implements PartRepository {
     return this.restore(record);
   }
 
+  async setPartStockQuantity(id: string, stockQuantity: number) {
+    const updated = await this.prisma.part.updateMany({
+      where: { id, deletedAt: null },
+      data: { stockQuantity },
+    });
+    if (updated.count !== 1) throw new PartNotFoundError();
+
+    const record = await this.prisma.part.findUniqueOrThrow({ where: { id } });
+
+    return this.restore(record);
+  }
+
+  async addPartStock(id: string, quantity: number) {
+    const updated = await this.prisma.part.updateMany({
+      where: {
+        id,
+        deletedAt: null,
+        stockQuantity: { lte: MAX_PART_STOCK_QUANTITY - quantity },
+      },
+      data: { stockQuantity: { increment: quantity } },
+    });
+    if (updated.count !== 1) {
+      const current = await this.findPart(id);
+      if (!current) throw new PartNotFoundError();
+      throw new PartStockOverflowError();
+    }
+
+    const record = await this.prisma.part.findUniqueOrThrow({ where: { id } });
+
+    return this.restore(record);
+  }
+
   async deletePart(id: string, preserveUsage: boolean) {
     if (preserveUsage) {
       await this.prisma.part.update({
@@ -76,6 +109,7 @@ export class PrismaPartRepository implements PartRepository {
     sku: string;
     price: { toString(): string };
     isActive: boolean;
+    stockQuantity: number;
   }) {
     return PartEntity.restore({
       id: record.id,
@@ -84,6 +118,7 @@ export class PrismaPartRepository implements PartRepository {
       sku: record.sku,
       price: record.price.toString(),
       isActive: record.isActive,
+      stockQuantity: record.stockQuantity,
     });
   }
 }

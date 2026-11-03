@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { QuoteStatus } from "@/modules/quotes/domain/quote-status";
 import { createQuoteApiTestApp } from "../support/create-quote-api-test-app";
 
 describe("POST /api/public/quotes/:id/decision", () => {
@@ -12,10 +13,10 @@ describe("POST /api/public/quotes/:id/decision", () => {
       method: "POST",
       url: "/api/public/quotes/00000000-0000-4000-8000-000000000020/decision",
       headers: { "x-approval-token": "valid-approval-token" },
-      payload: { decision: "APPROVED" },
+      payload: { decision: QuoteStatus.APPROVED },
     });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ decision: "APPROVED", expired: false });
+    expect(response.json()).toMatchObject({ decision: QuoteStatus.APPROVED, expired: false });
     expect(repository.decideInput).toMatchObject({ tokenHash: "hashed:valid-approval-token" });
   });
 });

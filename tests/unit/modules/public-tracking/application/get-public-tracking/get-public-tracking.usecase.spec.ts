@@ -1,6 +1,7 @@
 import { FakeTrackingRepository } from "@tests/support/fake-tracking.repository";
 import { describe, expect, it } from "vitest";
 import { GetPublicTrackingUseCase } from "@/modules/public-tracking/application/get-public-tracking/get-public-tracking.usecase";
+import { WorkOrderStatus } from "@/modules/work-orders/domain/work-order-status";
 import { UnauthorizedError } from "@/shared/domain/errors";
 
 describe("GetPublicTrackingUseCase", () => {
@@ -8,7 +9,7 @@ describe("GetPublicTrackingUseCase", () => {
     const repository = new FakeTrackingRepository();
     repository.trackedOrder = {
       id: "order-id",
-      status: "EM_EXECUCAO",
+      status: WorkOrderStatus.EM_EXECUCAO,
       openedAt: new Date(),
       vehicle: { plate: "ABC1234", brand: "Marca", model: "Modelo", year: 2020 },
       services: ["Revisão"],

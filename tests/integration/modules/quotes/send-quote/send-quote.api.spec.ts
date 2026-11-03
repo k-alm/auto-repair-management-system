@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { QuoteStatus } from "@/modules/quotes/domain/quote-status";
 import { createQuoteApiTestApp } from "../support/create-quote-api-test-app";
 
 describe("POST /api/work-orders/:id/quote/send", () => {
@@ -15,7 +16,7 @@ describe("POST /api/work-orders/:id/quote/send", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
       id: "00000000-0000-4000-8000-000000000004",
-      status: "PENDING",
+      status: QuoteStatus.PENDING,
     });
     expect(repository.sentInput?.publicApiUrl).toBe("https://api.example.com");
   });
