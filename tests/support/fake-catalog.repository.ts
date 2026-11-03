@@ -88,6 +88,16 @@ export class FakeCatalogRepository implements ServiceRepository, PartRepository 
     return updated;
   }
 
+  async setPartStockQuantity(id: string, stockQuantity: number) {
+    return this.updatePart(id, { stockQuantity });
+  }
+
+  async addPartStock(id: string, quantity: number) {
+    const part = this.parts.get(id);
+    if (!part) throw new Error("part missing");
+    return this.updatePart(id, { stockQuantity: part.props.stockQuantity + quantity });
+  }
+
   async deletePart(id: string, preserveUsage: boolean) {
     this.partPreserved = preserveUsage;
     if (preserveUsage) {

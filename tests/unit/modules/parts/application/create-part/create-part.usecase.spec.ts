@@ -5,7 +5,7 @@ import { Part } from "@/modules/parts/domain/entities/part";
 import { DuplicatePartSkuError } from "@/modules/parts/domain/part.errors";
 
 describe("CreatePartUseCase", () => {
-  it("creates a piece without stock tracking", async () => {
+  it("creates a part with a default stock balance of zero", async () => {
     const result = await new CreatePartUseCase(new FakeCatalogRepository()).execute({
       name: "Filtro",
       sku: "F-1",
@@ -13,7 +13,7 @@ describe("CreatePartUseCase", () => {
       isActive: true,
     });
     expect(result).toMatchObject({ name: "Filtro", sku: "F-1", price: "15.5" });
-    expect(result).not.toHaveProperty("stockQuantity");
+    expect(result.stockQuantity).toBe(0);
   });
 
   it("rejects duplicate SKUs", async () => {

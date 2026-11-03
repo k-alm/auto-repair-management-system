@@ -4,4 +4,5 @@ export interface CreatePartInput {
   sku: string;
   price: string;
   isActive: boolean;
+  stockQuantity?: number;
 }

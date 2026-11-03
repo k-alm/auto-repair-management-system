@@ -25,10 +25,12 @@ import { ListEmployeesUseCase } from "./modules/employees/application/list-emplo
 import { UpdateEmployeeUseCase } from "./modules/employees/application/update-employee/update-employee.usecase";
 import { PrismaEmployeeRepository } from "./modules/employees/infrastructure/persistence/prisma-employee.repository";
 import { BcryptPasswordHasher } from "./modules/employees/infrastructure/security/bcrypt-password-hasher";
+import { AddPartStockUseCase } from "./modules/parts/application/add-part-stock/add-part-stock.usecase";
 import { CreatePartUseCase } from "./modules/parts/application/create-part/create-part.usecase";
 import { DeletePartUseCase } from "./modules/parts/application/delete-part/delete-part.usecase";
 import { GetPartUseCase } from "./modules/parts/application/get-part/get-part.usecase";
 import { ListPartsUseCase } from "./modules/parts/application/list-parts/list-parts.usecase";
+import { SetPartStockUseCase } from "./modules/parts/application/set-part-stock/set-part-stock.usecase";
 import { UpdatePartUseCase } from "./modules/parts/application/update-part/update-part.usecase";
 import { PrismaPartRepository } from "./modules/parts/infrastructure/persistence/prisma-part.repository";
 import { GetPublicTrackingUseCase } from "./modules/public-tracking/application/get-public-tracking/get-public-tracking.usecase";
@@ -125,10 +127,12 @@ export async function buildApp() {
       env.JWT_EXPIRES_IN,
     ),
     parts: {
+      addStock: new AddPartStockUseCase(partRepository),
       create: new CreatePartUseCase(partRepository),
       delete: new DeletePartUseCase(partRepository),
       get: new GetPartUseCase(partRepository),
       list: new ListPartsUseCase(partRepository),
+      setStock: new SetPartStockUseCase(partRepository),
       update: new UpdatePartUseCase(partRepository),
     },
     services: {

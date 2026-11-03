@@ -5,10 +5,12 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import { AddPartStockUseCase } from "@/modules/parts/application/add-part-stock/add-part-stock.usecase";
 import { CreatePartUseCase } from "@/modules/parts/application/create-part/create-part.usecase";
 import { DeletePartUseCase } from "@/modules/parts/application/delete-part/delete-part.usecase";
 import { GetPartUseCase } from "@/modules/parts/application/get-part/get-part.usecase";
 import { ListPartsUseCase } from "@/modules/parts/application/list-parts/list-parts.usecase";
+import { SetPartStockUseCase } from "@/modules/parts/application/set-part-stock/set-part-stock.usecase";
 import { UpdatePartUseCase } from "@/modules/parts/application/update-part/update-part.usecase";
 import { partsRoutes } from "@/modules/parts/interface/http/parts.routes";
 import { CreateServiceUseCase } from "@/modules/services/application/create-service/create-service.usecase";
@@ -39,10 +41,12 @@ export async function createCatalogApiTestApp() {
   );
   await app.register(
     partsRoutes({
+      addStock: new AddPartStockUseCase(repository),
       create: new CreatePartUseCase(repository),
       delete: new DeletePartUseCase(repository),
       get: new GetPartUseCase(repository),
       list: new ListPartsUseCase(repository),
+      setStock: new SetPartStockUseCase(repository),
       update: new UpdatePartUseCase(repository),
     }),
   );

@@ -19,6 +19,10 @@ describe("GET /api/parts/:id", () => {
     await repository.createPart(part);
     const response = await app.inject({ method: "GET", url: `/api/parts/${part.props.id}` });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ id: part.props.id, sku: "F-1" });
+    expect(response.json()).toMatchObject({
+      id: part.props.id,
+      sku: "F-1",
+      stockQuantity: part.props.stockQuantity,
+    });
   });
 });

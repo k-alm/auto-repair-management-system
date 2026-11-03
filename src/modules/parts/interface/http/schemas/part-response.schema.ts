@@ -7,4 +7,5 @@ export const partResponseSchema = z.object({
   sku: z.string(),
   price: z.string(),
   isActive: z.boolean(),
+  stockQuantity: z.number().int().nonnegative(),
 });

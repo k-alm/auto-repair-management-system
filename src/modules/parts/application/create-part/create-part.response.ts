@@ -5,4 +5,5 @@ export interface CreatePartResponse {
   sku: string;
   price: string;
   isActive: boolean;
+  stockQuantity: number;
 }

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Part } from "@/modules/parts/domain/entities/part";
-import { InvalidPartPriceError } from "@/modules/parts/domain/part.errors";
+import {
+  InvalidPartPriceError,
+  InvalidPartStockQuantityError,
+} from "@/modules/parts/domain/part.errors";
 
 describe("Part", () => {
   it("normalizes SKU and monetary precision", () => {
@@ -26,5 +29,20 @@ describe("Part", () => {
         isActive: true,
       }),
     ).toThrow(InvalidPartPriceError);
+  });
+
+  it("rejects negative and fractional stock quantities", () => {
+    for (const stockQuantity of [-1, 1.5]) {
+      expect(() =>
+        Part.create({
+          name: "Filtro",
+          description: null,
+          sku: "FLT-2",
+          price: "1",
+          isActive: true,
+          stockQuantity,
+        }),
+      ).toThrow(InvalidPartStockQuantityError);
+    }
   });
 });
