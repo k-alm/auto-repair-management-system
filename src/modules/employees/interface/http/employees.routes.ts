@@ -6,7 +6,6 @@ import type { GetEmployeeUseCase } from "../../application/get-employee/get-empl
 import type { ListEmployeesUseCase } from "../../application/list-employees/list-employees.usecase";
 import type { UpdateEmployeeUseCase } from "../../application/update-employee/update-employee.usecase";
 import { createEmployeeBodySchema } from "./schemas/create-employee.schema";
-import { deleteEmployeeResponseSchema } from "./schemas/delete-employee.schema";
 import { employeeErrorResponseSchemas } from "./schemas/employee-error.schema";
 import { employeeParamsSchema } from "./schemas/employee-params.schema";
 import {
@@ -97,10 +96,12 @@ export function employeeRoutes(dependencies: EmployeeRouteDependencies): Fastify
         schema: {
           tags: ["Employees"],
           params: employeeParamsSchema,
-          response: { 200: deleteEmployeeResponseSchema, ...employeeErrorResponseSchemas },
         },
       },
-      async (request) => dependencies.delete.execute(request.params),
+      async (request, reply) => {
+        await dependencies.delete.execute(request.params);
+        return reply.status(204).send();
+      },
     );
   };
 }
