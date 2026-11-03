@@ -17,6 +17,14 @@ import { GetCustomerUseCase } from "./modules/customers/application/get-customer
 import { ListCustomersUseCase } from "./modules/customers/application/list-customers/list-customers.usecase";
 import { UpdateCustomerUseCase } from "./modules/customers/application/update-customer/update-customer.usecase";
 import { PrismaCustomerRepository } from "./modules/customers/infrastructure/persistence/prisma-customer.repository";
+import { AuthorizeEmployeeManagementUseCase } from "./modules/employees/application/authorize-employee-management/authorize-employee-management.usecase";
+import { CreateEmployeeUseCase } from "./modules/employees/application/create-employee/create-employee.usecase";
+import { DeleteEmployeeUseCase } from "./modules/employees/application/delete-employee/delete-employee.usecase";
+import { GetEmployeeUseCase } from "./modules/employees/application/get-employee/get-employee.usecase";
+import { ListEmployeesUseCase } from "./modules/employees/application/list-employees/list-employees.usecase";
+import { UpdateEmployeeUseCase } from "./modules/employees/application/update-employee/update-employee.usecase";
+import { PrismaEmployeeRepository } from "./modules/employees/infrastructure/persistence/prisma-employee.repository";
+import { BcryptPasswordHasher } from "./modules/employees/infrastructure/security/bcrypt-password-hasher";
 import { CreatePartUseCase } from "./modules/parts/application/create-part/create-part.usecase";
 import { DeletePartUseCase } from "./modules/parts/application/delete-part/delete-part.usecase";
 import { GetPartUseCase } from "./modules/parts/application/get-part/get-part.usecase";
@@ -88,6 +96,7 @@ export async function buildApp() {
   const vehicleRepository = new PrismaVehicleRepository(fastify.prisma);
   const executionTimeRepository = new PrismaExecutionTimeRepository(fastify.prisma);
   const employeeRepository = new PrismaEmployeeCredentialsRepository(fastify.prisma);
+  const employeeManagementRepository = new PrismaEmployeeRepository(fastify.prisma);
   const serviceRepository = new PrismaServiceRepository(fastify.prisma);
   const partRepository = new PrismaPartRepository(fastify.prisma);
   const workOrderRepository = new PrismaWorkOrderRepository(fastify.prisma);
@@ -152,6 +161,14 @@ export async function buildApp() {
     },
     publicTracking: {
       get: new GetPublicTrackingUseCase(trackingRepository, new Sha256TrackingTokenHasher()),
+    },
+    employees: {
+      authorize: new AuthorizeEmployeeManagementUseCase(employeeManagementRepository),
+      create: new CreateEmployeeUseCase(employeeManagementRepository, new BcryptPasswordHasher()),
+      delete: new DeleteEmployeeUseCase(employeeManagementRepository),
+      get: new GetEmployeeUseCase(employeeManagementRepository),
+      list: new ListEmployeesUseCase(employeeManagementRepository),
+      update: new UpdateEmployeeUseCase(employeeManagementRepository),
     },
   });
   notificationWorker(fastify);

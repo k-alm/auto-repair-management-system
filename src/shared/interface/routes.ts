@@ -3,6 +3,8 @@ import type { LoginUseCase } from "@/modules/authentication/application/login/lo
 import { authenticationRoutes } from "@/modules/authentication/interface/http/authentication.routes";
 import type { CustomerRouteDependencies } from "@/modules/customers/interface/http/customers.routes";
 import { customerRoutes } from "@/modules/customers/interface/http/customers.routes";
+import type { EmployeeRouteDependencies } from "@/modules/employees/interface/http/employees.routes";
+import { employeeRoutes } from "@/modules/employees/interface/http/employees.routes";
 import type { PartRouteDependencies } from "@/modules/parts/interface/http/parts.routes";
 import { partsRoutes } from "@/modules/parts/interface/http/parts.routes";
 import type { PublicTrackingRouteDependencies } from "@/modules/public-tracking/interface/http/public-tracking.routes";
@@ -22,6 +24,7 @@ import { workOrderRoutes } from "@/modules/work-orders/interface/http/work-order
 
 interface RouteDependencies {
   customers: CustomerRouteDependencies;
+  employees: EmployeeRouteDependencies;
   vehicles: VehicleRouteDependencies;
   report: GetAverageExecutionTimeUseCase;
   login: LoginUseCase;
@@ -35,6 +38,7 @@ interface RouteDependencies {
 export const routes: FastifyPluginAsyncZod<RouteDependencies> = async (fastify, dependencies) => {
   await fastify.register(authenticationRoutes(dependencies.login));
   await fastify.register(customerRoutes(dependencies.customers));
+  await fastify.register(employeeRoutes(dependencies.employees));
   await fastify.register(vehicleRoutes(dependencies.vehicles));
   await fastify.register(servicesRoutes(dependencies.services));
   await fastify.register(partsRoutes(dependencies.parts));

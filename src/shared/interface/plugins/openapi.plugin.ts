@@ -7,6 +7,7 @@ import { jsonSchemaTransform } from "fastify-type-provider-zod";
 const tags = [
   { name: "Auth", description: "Autenticação" },
   { name: "Customers", description: "Gestão de clientes" },
+  { name: "Employees", description: "Gestão de funcionários (somente ADMIN)" },
   { name: "Vehicles", description: "Gestão de veículos" },
   { name: "Services", description: "Gestão de serviços" },
   { name: "Parts", description: "Gestão de peças" },
