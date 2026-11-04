@@ -317,7 +317,7 @@ docker run --rm -v "$PWD/src:/src" -v "$PWD/docs/security:/out" aquasec/trivy:la
 
 ## 14. Vídeo da entrega
 
-- Link do vídeo: 
+- Link do vídeo: https://youtu.be/W4PtIxEsN8Q
 
 ---
 
