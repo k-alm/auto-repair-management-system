@@ -324,4 +324,3 @@ docker run --rm -v "$PWD/src:/src" -v "$PWD/docs/security:/out" aquasec/trivy:la
 ### Versão entregue
 
 - Branch: main
-- Hash do commit: 
